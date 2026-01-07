@@ -3,6 +3,9 @@ let layer;
 let images = [];
 let firstImageFile = null;
 let firstImageDataUrl = null;
+let originalImages = []; // 元のImage要素を保持
+let guideLayer = null; // ガイドラインレイヤーの参照
+let currentLayout = 1; // 現在のレイアウト（1-4）
 const CANVAS_ASPECT_RATIO = 4 / 3; // 4:3 aspect ratio
 const SNAP_THRESHOLD = 10; // スナップ距離
 
@@ -153,7 +156,7 @@ function initCanvas(imageUrls) {
   });
 
   // ガイドラインレイヤー（スナップ時に表示）
-  const guideLayer = new Konva.Layer();
+  guideLayer = new Konva.Layer();
   stage.add(guideLayer);
 
   // 画像レイヤー
@@ -170,14 +173,18 @@ function initCanvas(imageUrls) {
   img1.onload = function () {
     img1Loaded = true;
     if (img2Loaded) {
-      placeImages(img1, img2, canvasWidth, canvasHeight, guideLayer);
+      originalImages = [img1, img2]; // 元画像を保存
+      placeImages(currentLayout);
+      setupLayoutButtons();
     }
   };
 
   img2.onload = function () {
     img2Loaded = true;
     if (img1Loaded) {
-      placeImages(img1, img2, canvasWidth, canvasHeight, guideLayer);
+      originalImages = [img1, img2]; // 元画像を保存
+      placeImages(currentLayout);
+      setupLayoutButtons();
     }
   };
 
@@ -188,44 +195,149 @@ function initCanvas(imageUrls) {
   document.getElementById("downloadBtn").addEventListener("click", function () {
     downloadImage();
   });
+
+  // キーボードショートカット（⌘+S / Ctrl+S）
+  document.addEventListener("keydown", function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+      e.preventDefault(); // ブラウザのデフォルト保存動作を防ぐ
+      downloadImage();
+    }
+  });
 }
 
-function placeImages(img1, img2, canvasWidth, canvasHeight, guideLayer) {
-  // 画像1: 幅50%とCanvas高さのうち、小さい方に合わせる
-  const img1WidthScale = (canvasWidth * 0.5) / img1.width;
-  const img1HeightScale = canvasHeight / img1.height;
-  const img1Scale = Math.min(img1WidthScale, img1HeightScale);
+// レイアウトボタンのセットアップ
+function setupLayoutButtons() {
+  const buttons = [
+    { id: "layout1Btn", layout: 1 },
+    { id: "layout2Btn", layout: 2 },
+    { id: "layout3Btn", layout: 3 },
+    { id: "layout4Btn", layout: 4 },
+  ];
 
-  // 画像2: 幅50%とCanvas高さのうち、小さい方に合わせる
-  const img2WidthScale = (canvasWidth * 0.5) / img2.width;
-  const img2HeightScale = canvasHeight / img2.height;
-  const img2Scale = Math.min(img2WidthScale, img2HeightScale);
+  buttons.forEach(({ id, layout }) => {
+    document.getElementById(id).addEventListener("click", function () {
+      switchLayout(layout);
+    });
+  });
 
-  // スケール適用後の実際の幅を計算
-  const img1ActualWidth = img1.width * img1Scale;
-  const img2ActualWidth = img2.width * img2Scale;
+  // 初期状態でレイアウト1をアクティブに
+  updateActiveButton(1);
+}
 
-  // 内側寄せ（画像同士がくっついている状態で中央配置）
-  const totalWidth = img1ActualWidth + img2ActualWidth;
-  const leftMargin = (canvasWidth - totalWidth) / 2;
+// レイアウト切り替え
+function switchLayout(layoutNumber) {
+  currentLayout = layoutNumber;
+  updateActiveButton(layoutNumber);
+  placeImages(layoutNumber);
+}
 
-  // Konva Image 1
+// アクティブボタンの更新
+function updateActiveButton(layoutNumber) {
+  document.querySelectorAll(".layout-btn").forEach((btn) => {
+    btn.classList.remove("active");
+  });
+  document.getElementById(`layout${layoutNumber}Btn`).classList.add("active");
+}
+
+function placeImages(layoutNumber) {
+  const canvasWidth = stage.width();
+  const canvasHeight = stage.height();
+  const [img1, img2] = originalImages;
+
+  // 既存の画像を削除
+  layer.destroyChildren();
+
+  let firstImg, secondImg;
+  let scale1, scale2;
+  let x1, y1, x2, y2;
+
+  switch (layoutNumber) {
+    case 1: // img1 | img2 (横並び)
+      firstImg = img1;
+      secondImg = img2;
+      // 幅50%とCanvas高さのうち、小さい方に合わせる
+      scale1 = Math.min((canvasWidth * 0.5) / img1.width, canvasHeight / img1.height);
+      scale2 = Math.min((canvasWidth * 0.5) / img2.width, canvasHeight / img2.height);
+
+      const width1Case1 = img1.width * scale1;
+      const width2Case1 = img2.width * scale2;
+      const totalWidthCase1 = width1Case1 + width2Case1;
+      const leftMarginCase1 = (canvasWidth - totalWidthCase1) / 2;
+
+      x1 = leftMarginCase1;
+      y1 = 0;
+      x2 = leftMarginCase1 + width1Case1;
+      y2 = 0;
+      break;
+
+    case 2: // img2 | img1 (横並び、逆)
+      firstImg = img2;
+      secondImg = img1;
+      scale1 = Math.min((canvasWidth * 0.5) / img2.width, canvasHeight / img2.height);
+      scale2 = Math.min((canvasWidth * 0.5) / img1.width, canvasHeight / img1.height);
+
+      const width1Case2 = img2.width * scale1;
+      const width2Case2 = img1.width * scale2;
+      const totalWidthCase2 = width1Case2 + width2Case2;
+      const leftMarginCase2 = (canvasWidth - totalWidthCase2) / 2;
+
+      x1 = leftMarginCase2;
+      y1 = 0;
+      x2 = leftMarginCase2 + width1Case2;
+      y2 = 0;
+      break;
+
+    case 3: // img1 / img2 (縦並び)
+      firstImg = img1;
+      secondImg = img2;
+      scale1 = Math.min(canvasWidth / img1.width, (canvasHeight * 0.5) / img1.height);
+      scale2 = Math.min(canvasWidth / img2.width, (canvasHeight * 0.5) / img2.height);
+
+      const height1Case3 = img1.height * scale1;
+      const height2Case3 = img2.height * scale2;
+      const totalHeightCase3 = height1Case3 + height2Case3;
+      const topMarginCase3 = (canvasHeight - totalHeightCase3) / 2;
+
+      x1 = 0;
+      y1 = topMarginCase3;
+      x2 = 0;
+      y2 = topMarginCase3 + height1Case3;
+      break;
+
+    case 4: // img2 / img1 (縦並び、逆)
+      firstImg = img2;
+      secondImg = img1;
+      scale1 = Math.min(canvasWidth / img2.width, (canvasHeight * 0.5) / img2.height);
+      scale2 = Math.min(canvasWidth / img1.width, (canvasHeight * 0.5) / img1.height);
+
+      const height1Case4 = img2.height * scale1;
+      const height2Case4 = img1.height * scale2;
+      const totalHeightCase4 = height1Case4 + height2Case4;
+      const topMarginCase4 = (canvasHeight - totalHeightCase4) / 2;
+
+      x1 = 0;
+      y1 = topMarginCase4;
+      x2 = 0;
+      y2 = topMarginCase4 + height1Case4;
+      break;
+  }
+
+  // Konva Image オブジェクトを作成
   const konvaImg1 = new Konva.Image({
-    image: img1,
-    x: leftMargin,
-    y: 0,
-    scaleX: img1Scale,
-    scaleY: img1Scale,
+    image: firstImg,
+    x: x1,
+    y: y1,
+    scaleX: scale1,
+    scaleY: scale1,
     draggable: true,
   });
 
-  // Konva Image 2
   const konvaImg2 = new Konva.Image({
-    image: img2,
-    x: leftMargin + img1ActualWidth,
-    y: 0,
-    scaleX: img2Scale,
-    scaleY: img2Scale,
+    image: secondImg,
+    x: x2,
+    y: y2,
+    scaleX: scale2,
+    scaleY: scale2,
     draggable: true,
   });
 

@@ -37,8 +37,16 @@
             </div>
 
             <div class="actions">
-                <button class="button secondary" onclick="location.reload()">最初に戻る</button>
-                <button class="button" id="downloadBtn">ダウンロード</button>
+                <div class="layout-buttons">
+                    <button class="layout-btn" id="layout1Btn" title="横並び: 1 | 2">1|2</button>
+                    <button class="layout-btn" id="layout2Btn" title="横並び: 2 | 1">2|1</button>
+                    <button class="layout-btn" id="layout3Btn" title="縦並び: 1 / 2">1/2</button>
+                    <button class="layout-btn" id="layout4Btn" title="縦並び: 2 / 1">2/1</button>
+                </div>
+                <div class="action-buttons">
+                    <button class="button secondary" onclick="location.reload()">最初に戻る</button>
+                    <button class="button" id="downloadBtn">ダウンロード（⌘+S）</button>
+                </div>
             </div>
         </div>
     </div>

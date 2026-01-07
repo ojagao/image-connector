@@ -4,7 +4,6 @@ let images = [];
 let firstImageFile = null;
 let firstImageDataUrl = null;
 const CANVAS_ASPECT_RATIO = 4 / 3; // 4:3 aspect ratio
-const GRID_SIZE = 50; // グリッドのサイズ（ピクセル）
 const SNAP_THRESHOLD = 10; // スナップ距離
 
 // PDF.jsのワーカー設定
@@ -152,11 +151,6 @@ function initCanvas(imageUrls) {
     width: canvasWidth,
     height: canvasHeight,
   });
-
-  // グリッドレイヤー
-  const gridLayer = new Konva.Layer();
-  drawGrid(gridLayer, canvasWidth, canvasHeight);
-  stage.add(gridLayer);
 
   // ガイドラインレイヤー（スナップ時に表示）
   const guideLayer = new Konva.Layer();
@@ -338,30 +332,6 @@ function getSnapPoints(currentImg, canvasWidth, canvasHeight) {
   }
 
   return { vertical, horizontal };
-}
-
-function drawGrid(gridLayer, canvasWidth, canvasHeight) {
-  // 縦線
-  for (let i = 0; i <= canvasWidth; i += GRID_SIZE) {
-    const line = new Konva.Line({
-      points: [i, 0, i, canvasHeight],
-      stroke: "#e0e0e0",
-      strokeWidth: 1,
-    });
-    gridLayer.add(line);
-  }
-
-  // 横線
-  for (let i = 0; i <= canvasHeight; i += GRID_SIZE) {
-    const line = new Konva.Line({
-      points: [0, i, canvasWidth, i],
-      stroke: "#e0e0e0",
-      strokeWidth: 1,
-    });
-    gridLayer.add(line);
-  }
-
-  gridLayer.draw();
 }
 
 function drawVerticalGuide(guideLayer, x, height) {

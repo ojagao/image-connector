@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Connector</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="initial-screen" id="initialScreen">
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" accept="image/*,.pdf" multiple>
+                <button class="select-button" onclick="document.getElementById('fileInput').click()">
+                    結合する画像を選ぶ
+                </button>
+            </div>
+        </div>
+
+        <div class="preview-screen hidden" id="previewScreen">
+            <div class="preview-wrapper">
+                <img id="previewImage" src="" alt="プレビュー">
+            </div>
+            <div class="preview-message">もう一枚選択してください</div>
+            <div class="preview-actions">
+                <input type="file" id="fileInput2" accept="image/*,.pdf">
+                <button class="select-button" onclick="document.getElementById('fileInput2').click()">
+                    2枚目を選ぶ
+                </button>
+            </div>
+        </div>
+
+        <div class="editor-screen hidden" id="editorScreen">
+            <div class="canvas-wrapper">
+                <canvas id="canvas"></canvas>
+            </div>
+
+            <div class="actions">
+                <button class="button secondary" onclick="location.reload()">最初に戻る</button>
+                <button class="button" id="downloadBtn">ダウンロード</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

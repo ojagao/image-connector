@@ -6,6 +6,7 @@ let firstImageDataUrl = null;
 let originalImages = []; // 元のImage要素を保持
 let guideLayer = null; // ガイドラインレイヤーの参照
 let currentLayout = 1; // 現在のレイアウト（1-4）
+let transformer = null; // Transformerの参照
 const CANVAS_ASPECT_RATIO = 4 / 3; // 4:3 aspect ratio
 const SNAP_THRESHOLD = 10; // スナップ距離
 
@@ -163,6 +164,30 @@ function initCanvas(imageUrls) {
   layer = new Konva.Layer();
   stage.add(layer);
 
+  // Transformerを作成（リサイズ・回転機能）
+  transformer = new Konva.Transformer({
+    rotateEnabled: true,
+    borderStroke: '#2c2c2c',
+    borderStrokeWidth: 2,
+    anchorStroke: '#2c2c2c',
+    anchorFill: 'white',
+    anchorSize: 10,
+    keepRatio: false, // アスペクト比を保持しない（自由にリサイズ）
+  });
+  layer.add(transformer);
+
+  // Stageの背景をクリックした時にTransformerを非表示
+  stage.on('click tap', function (e) {
+    // クリックした対象がStage自体の場合（画像以外の場所をクリック）
+    if (e.target === stage) {
+      transformer.nodes([]);
+      layer.draw();
+      return;
+    }
+
+    // 画像をクリックした場合は何もしない（画像側で処理）
+  });
+
   // 画像を読み込んで配置
   const img1 = new Image();
   const img2 = new Image();
@@ -244,8 +269,14 @@ function placeImages(layoutNumber) {
   const canvasHeight = stage.height();
   const [img1, img2] = originalImages;
 
-  // 既存の画像を削除
-  layer.destroyChildren();
+  // Transformerをクリア
+  if (transformer) {
+    transformer.nodes([]);
+  }
+
+  // 既存の画像を削除（Transformerは残す）
+  const children = layer.children.filter(child => child !== transformer);
+  children.forEach(child => child.destroy());
 
   let firstImg, secondImg;
   let scale1, scale2;
@@ -346,6 +377,12 @@ function placeImages(layoutNumber) {
   // スナップ機能を追加
   [konvaImg1, konvaImg2].forEach((img) => {
     addSnapBehavior(img, canvasWidth, canvasHeight, guideLayer);
+
+    // 画像をクリックした時にTransformerをアタッチ
+    img.on('click tap', function () {
+      transformer.nodes([img]);
+      layer.draw();
+    });
   });
 
   layer.add(konvaImg1);
